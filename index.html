@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>FB Sample Page</title>
+	<link href="css/bootstrap.min.css"  rel="stylesheet">
+
+</head>
+<body>
+	<div class="col-lg-8">
+		<div class="btn-group" role="group" aria-label="auth" >
+			<button id="FBlogin" type="button" class="btn btn-default" onclick="Login()">Login</button>
+			<button id="FBlogout" type="button" class="btn btn-default" onclick="Logout()">Logout</button>
+		</div>
+	</div>
+	<!--
+	<div class="col-lg-8">
+		<div>
+			<input  type="text" value="news" ></input>
+			<button  type="button" class="btn btn-default" onclick="GetVerified()" >Get verified pages</button>
+		</div>
+	</div>
+	 </div>
+     -->
+  <div class="col-lg-8">
+    <div class="input-group">
+      <input id="keyword" type="text" class="form-control" placeholder="Search for pages">
+      <span class="input-group-btn">
+        <button id="FBGetVerified" class="btn btn-default" type="button" onclick="GetVerified()">Go!</button>
+      </span>
+    </div><!-- /input-group -->
+  </div><!-- /.col-lg-6 -->
+</div><!-- /.row -->
+	<div id="logs"></div>
+	<div id="status"></div>
+	  <div class="col-lg-8">
+	<div class="container">
+		<ul class="nav nav-tabs">
+			<li class="active"><a data-toggle="tab" href="#latest">Home</a></li>
+			<li><a data-toggle="tab" href="#keywords">keywords</a></li>
+		</ul>
+
+		<div class="tab-content">
+			<div id="latest" class="tab-pane fade in active">
+					<div id="showlatest"></div>
+				<button id="more" type="button" class="btn btn-primary" onclick="">more</button>
+			</div>
+			<div id="keywords" class="tab-pane fade">
+				<h3>Menu 1</h3>
+				<p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+			</div>
+		</div>
+	</div>
+   </div>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="FB.js"></script>
+
+</body>
+</html>
