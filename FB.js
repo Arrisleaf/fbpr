@@ -1,4 +1,13 @@
-	
+var clicks=0;
+var lastpagename='';
+var pages=[];	
+
+function clearPageName(){
+	document.getElementById("pagename").value="";
+}
+function clearKeyword(){
+	document.getElementById("keyword").value="";
+}
 
 window.fbAsyncInit = function() {
 	FB.init({
@@ -54,32 +63,9 @@ function getPhoto()
 }(document, 'script', 'facebook-jssdk'));
 
 
-function GetVerified(){
-	document.getElementById("logs").innerHTML=''
-	var count=0;
-	var round=1;
-	var path='/search?q='+document.getElementById("keyword").value+'&type=page';
-	FB.api( path , { fields: 'is_verified'}, function(response) {
-		var i=0;
-		//console.log(JSON.stringify(response));
-		for (i=0;i<25;i++)
-		{
-			if(response.data[i]===undefined){
-				document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
-				return;
-			}
-			if(response.data[i].is_verified==true)
-			{
-				document.getElementById("logs").innerHTML+=(response.data[i].id+'<br>');
-				count++;
-				GetPost(response.data[i].id);
-			}
-		}
-		document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
-		setTimeout(function(){GetNextVerified(response.paging.next,count,round)}, 1000);
-	});
-};
 
+
+/*
 function GetNextVerified(path,count,round){
 	round++;
 	FB.api( path,  function(response) {
@@ -101,9 +87,8 @@ function GetNextVerified(path,count,round){
 		document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
 		setTimeout(function(){GetNextVerified(response.paging.next,count,round)}, 1000);
 	});
-
 };
-
+*/
 function GetPost(pageid){
 
 	var postcount=0
@@ -178,16 +163,143 @@ function Logout()
 	FB.logout(function(){document.location.reload();});
 }
 
+
+
+function getNextVerified(receive,count,callback){
+	count++;
+	var i=0;
+	var path=receive.paging.next
+	FB.api( path , { fields: 'is_verified'}, function(response) {
+				//console.log(JSON.stringify(response));
+		if (!response || response.error) {
+			console.log('End of the search.');
+			if (callback && typeof callback=='function')callback();
+			return;
+		} 
+		else {
+			for (i=0;i<25;i++){
+				if(response.data[i]===undefined){
+					i=404;
+			console.log('End of the search.');
+					continue;
+				}
+				if(response.data[i].is_verified==true)
+				{
+					pages.push(response.data[i].id);
+					console.log(pages[pages.length-1]);
+				}
+			}
+			if(i==25)
+			{
+				getNextVerified(response,count,callback);
+			} 
+			else if (callback && typeof callback=='function')callback();			
+		}
+										console.log("VR: "+count+" length: "+pages.length);
+	});
+};
+
 function search()
 {
+	if(lastpagename==document.getElementById("pagename").value)return;
 	
-     show();
+	lastpagename=document.getElementById("pagename").value;
+	pages.length=0;
+	document.getElementById("showlatest").innerHTML='';
+	document.getElementById("showkeywords").innerHTML='';
+	var path='/search?q='+document.getElementById("pagename").value+'&type=page';
+	var i=0;
+	var count=1;
+	FB.api( path , { fields: 'is_verified'}, function(response) {
+		console.log(JSON.stringify(response));
+		if (!response || response.error) {
+			document.getElementById("showlatest").innerHTML='Search failed.';
+			return;
+		} 
+		else {
+			for (i=0;i<25;i++){
+				if(response.data[i]===undefined){
+					i=404;
+							console.log('End of the search.');
+					continue;
+				}
+				if(response.data[i].is_verified==true)
+				{
+					pages.push(response.data[i].id);
+					console.log(pages[pages.length-1]);
+				}
+			}
+			if(i==25)
+			{
+				getNextVerified(response,count,show);
+			}
+			else show(); 
+		}
+										console.log("VR: "+count+" length: "+pages.length);
+	});
+}
 
-
+function FBsearch(callback)
+{
+	FB.api( path , { fields: 'is_verified'}, function(response) {
+		var i=0;
+		//console.log(JSON.stringify(response));
+		for (i=0;i<25;i++)
+		{
+			if(response.data[i]===undefined){
+				document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
+				return;
+			}
+			if(response.data[i].is_verified==true)
+			{
+				pages.push(response.data[i].id);
+				console.log(pages[i]);
+				GetPost(response.data[i].id);
+			}
+		}
+		document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
+		setTimeout(function(){GetNextVerified(response.paging.next,count,round)}, 1000);
+	});
 }
 
 function show()
 {
+	var i=0
+	if (pages.length==0){
+					document.getElementById("showlatest").innerHTML+='No verified pages found.';
+					return;
+	}
+	else
+	{
+							document.getElementById("showlatest").innerHTML+=pages.length+' verified pages found.';
+	}
+	for (i=0;i<pages.length;i++)
+		console.log("page "+i+" : "+pages[i]);
+	/*
+	//var count=0;
+	//var round=1;
+	var path='/search?q='+document.getElementById("pagename").value+'&type=page';
+	FB.api( path , { fields: 'is_verified'}, function(response) {
+		var i=0;
+		//console.log(JSON.stringify(response));
+		for (i=0;i<25;i++)
+		{
+			if(response.data[i]===undefined){
+				document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
+				return;
+			}
+			if(response.data[i].is_verified==true)
+			{
+				document.getElementById("logs").innerHTML+=(response.data[i].id+'<br>');
+				count++;
+				GetPost(response.data[i].id);
+			}
+		}
+		document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
+		setTimeout(function(){GetNextVerified(response.paging.next,count,round)}, 1000);
+		*/
+	}
 
 
-}
+
+

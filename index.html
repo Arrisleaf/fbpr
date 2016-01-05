@@ -6,6 +6,7 @@
 
 </head>
 <body>
+	<h1>Facebook Page Reader</h1>
 	<div class="col-lg-8">
 		<div class="btn-group" role="group" aria-label="auth" >
 			<button id="FBlogin" type="button" class="btn btn-default" onclick="Login()">Login</button>
@@ -21,22 +22,33 @@
 	</div>
 	 </div>
      -->
-  <div class="col-lg-8">
+  <div class="col-lg-5">
     <div class="input-group">
-      <input id="keyword" type="text" class="form-control" placeholder="Search for pages">
+      <input id="pagename" type="text" class="form-control" placeholder="Search for pages">
       <span class="input-group-btn">
-        <button id="FBGetVerified" class="btn btn-default" type="button" onclick="GetVerified()">Go!</button>
+        <button id="getPageName" class="btn btn-primary" type="button" onclick="search()">Get Pages!</button>
+                <button id="clearPageName" class="btn btn-default" type="button" onclick="clearPageName()">Clear</button>
       </span>
     </div><!-- /input-group -->
   </div><!-- /.col-lg-6 -->
 </div><!-- /.row -->
+  <div class="col-lg-5">
+    <div class="input-group">
+      <input id="keyword" type="text" class="form-control" placeholder="Search on the pages">
+      <span class="input-group-btn">
+        <button id="getKeyword" class="btn btn-primary" type="button" onclick="search()">Search the page!</button>
+        <button id="clearKeyword" class="btn btn-default" type="button" onclick="clearKeyword()">Clear</button>
+      </span>
+    </div><!-- /input-group -->
+  </div><!-- /.col-lg-6 -->
+</div>
 	<div id="logs"></div>
 	<div id="status"></div>
 	  <div class="col-lg-8">
 	<div class="container">
 		<ul class="nav nav-tabs">
-			<li class="active"><a data-toggle="tab" href="#latest">Home</a></li>
-			<li><a data-toggle="tab" href="#keywords">keywords</a></li>
+			<li class="active"><a data-toggle="tab" href="#latest">Latest</a></li>
+			<li><a data-toggle="tab" href="#keywords">Keywords</a></li>
 		</ul>
 
 		<div class="tab-content">
@@ -45,8 +57,8 @@
 				<button id="more" type="button" class="btn btn-primary" onclick="">more</button>
 			</div>
 			<div id="keywords" class="tab-pane fade">
-				<h3>Menu 1</h3>
-				<p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+					<div id="showkeywords"></div>
+				<button id="more" type="button" class="btn btn-primary" onclick="">more</button>
 			</div>
 		</div>
 	</div>
