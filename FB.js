@@ -171,32 +171,33 @@ function getNextVerified(receive,count,callback){
 	var path=receive.paging.next
 	FB.api( path , { fields: 'is_verified'}, function(response) {
 				//console.log(JSON.stringify(response));
-		if (!response || response.error) {
-			console.log('End of the search.');
-			if (callback && typeof callback=='function')callback();
-			return;
-		} 
-		else {
-			for (i=0;i<25;i++){
-				if(response.data[i]===undefined){
-					i=404;
-			console.log('End of the search.');
-					continue;
+				if (!response || response.error) {
+					console.log('End of the search.');
+					if (callback && typeof callback=='function')callback();
+					return;
+				} 
+				else {
+					for (i=0;i<25;i++){
+						if(response.data[i]===undefined){
+							i=404;
+							console.log('End of the search.');
+							continue;
+						}
+						if(response.data[i].is_verified==true)
+						{
+							pages.push(response.data[i].id);
+							console.log(pages[pages.length-1]);
+						}
+					}
+					if(i==25)
+					{
+						getNextVerified(response,count,callback);
+					} 
+					else if (callback && typeof callback=='function')callback();			
 				}
-				if(response.data[i].is_verified==true)
-				{
-					pages.push(response.data[i].id);
-					console.log(pages[pages.length-1]);
-				}
-			}
-			if(i==25)
-			{
-				getNextVerified(response,count,callback);
-			} 
-			else if (callback && typeof callback=='function')callback();			
-		}
-										console.log("VR: "+count+" length: "+pages.length);
-	});
+				console.log("VR: "+count+" length: "+pages.length);
+							document.getElementById("info").innerHTML=pages.length+' verified pages found...';
+			});
 };
 
 function search()
@@ -220,7 +221,7 @@ function search()
 			for (i=0;i<25;i++){
 				if(response.data[i]===undefined){
 					i=404;
-							console.log('End of the search.');
+					console.log('End of the search.');
 					continue;
 				}
 				if(response.data[i].is_verified==true)
@@ -235,7 +236,8 @@ function search()
 			}
 			else show(); 
 		}
-										console.log("VR: "+count+" length: "+pages.length);
+		console.log("VR: "+count+" length: "+pages.length);
+
 	});
 }
 
@@ -266,40 +268,96 @@ function show()
 {
 	var i=0
 	if (pages.length==0){
-					document.getElementById("showlatest").innerHTML+='No verified pages found.';
-					return;
+		document.getElementById("info").innerHTML='No verified pages found.';
+		return;
 	}
 	else
 	{
-							document.getElementById("showlatest").innerHTML+=pages.length+' verified pages found.';
+		document.getElementById("info").innerHTML=pages.length+' verified pages found.';
 	}
-	for (i=0;i<pages.length;i++)
+	for (i=0;i<pages.length;i++){
+
+
 		console.log("page "+i+" : "+pages[i]);
-	/*
-	//var count=0;
-	//var round=1;
-	var path='/search?q='+document.getElementById("pagename").value+'&type=page';
-	FB.api( path , { fields: 'is_verified'}, function(response) {
+
+		var count=0;
+		var PC=0
+		var PR=1;
+		var path=pages[count]+'/posts';
+		FB.api( path , function(response) {
+				//console.log(JSON.stringify(response));
+				if (!response || response.error) {
+					document.getElementById("showlatest").innerHTML+=' End of the page';
+					//if (callback && typeof callback=='function')callback();
+					return;
+				} 
+				else {
+					for (i=0;i<25;i++){
+						if(response.data[i]===undefined){
+							i=404;
+							console.log('End of the page.');
+							continue;
+						}
+						if(response.data[i].message===undefined)continue;
+						PC++;
+						if(response.data[i].story===undefined){	
+							document.getElementById("showlatest").innerHTML+="<p><a href='http://www.facebook.com/"+response.data[i].id+"'>www.facebook.com/"+response.data[i].id+"</a><br>";
+						}
+						else{		
+							document.getElementById("showlatest").innerHTML+="<p><a href='http://www.facebook.com/"+response.data[i].id+"'>"+response.data[i].story+"</a><br>";
+						}
+						document.getElementById("showlatest").innerHTML+='<span class="text-success" >'+response.data[i].created_time+"</span><br>";
+						document.getElementById("showlatest").innerHTML+=response.data[i].message+"<br></p>";
+				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
+				        xhr.onreadystatechange = function() {
+				        	if (xhr.readyState == XMLHttpRequest.DONE) {
+				        		console.log(xhr.responseText);
+				        	}
+				        }
+				        xhr.open("POST", "/elastic.html");
+                        //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        xhr.send(JSON.stringify(response.data[i]));
+                    }	
+        }
+        console.log("PR: "+PR+" PC: "+PC);
+    });
+}
+
+}
+
+function getPost(pageid){
+
+	var postcount=0
+	var postround=1;
+	var path=pageid+'/posts';
+	FB.api( path , function(response) {
 		var i=0;
 		//console.log(JSON.stringify(response));
 		for (i=0;i<25;i++)
 		{
 			if(response.data[i]===undefined){
-				document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
-				return;
+				document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
+				return ;
 			}
-			if(response.data[i].is_verified==true)
-			{
-				document.getElementById("logs").innerHTML+=(response.data[i].id+'<br>');
-				count++;
-				GetPost(response.data[i].id);
-			}
-		}
-		document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
-		setTimeout(function(){GetNextVerified(response.paging.next,count,round)}, 1000);
-		*/
-	}
+			if(response.data[i].message===undefined)continue;
+			
+				//document.getElementById("logs").innerHTML+=(response.data[i].id+'<br>');
+				postcount++;
+				var xhr = new XMLHttpRequest();   // new HttpRequest instance 
+				xhr.onreadystatechange = function() {
+					if (xhr.readyState == XMLHttpRequest.DONE) {
+						console.log(xhr.responseText);
+					}
+				}
+				xhr.open("POST", "/elastic.html");
+                //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhr.send(JSON.stringify(response.data[i]));
 
+            }
+            document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
+            setTimeout(function(){GetNextPost(response.paging.next,postcount,postround)}, 1000);
+        });
 
+}
 
 
