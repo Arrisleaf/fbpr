@@ -1,6 +1,10 @@
 var clicks=0;
 var lastpagename='';
-var pages=[];	
+var pages=[];
+var pagenum=0;
+var pagenames=[];
+var lastresponse={};
+var limit=100;
 
 function clearPageName(){
 	document.getElementById("pagename").value="";
@@ -71,7 +75,7 @@ function GetNextVerified(path,count,round){
 	FB.api( path,  function(response) {
 		var i=0;
 		//console.log("content:"+JSON.stringify(response));
-		for (i=0;i<25;i++)
+		for (i=0;i<limit;i++)
 		{
 			if(response.data[i]===undefined){
 				document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
@@ -97,7 +101,7 @@ function GetPost(pageid){
 	FB.api( path , function(response) {
 		var i=0;
 		//console.log(JSON.stringify(response));
-		for (i=0;i<25;i++)
+		for (i=0;i<limit;i++)
 		{
 			if(response.data[i]===undefined){
 				document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
@@ -131,7 +135,7 @@ function GetNextPost(path,postcount,postround){
 		var i=0;
 		//console.log(JSON.stringify(response));
 
-		for (i=0;i<25;i++)
+		for (i=0;i<limit;i++)
 		{
 			if(response.data[i]===undefined){
 				document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
@@ -177,8 +181,9 @@ function getNextVerified(receive,count,callback){
 					return;
 				} 
 				else {
-					for (i=0;i<25;i++){
+					for (i=0;i<limit;i++){
 						if(response.data[i]===undefined){
+												console.log("total: "+i);
 							i=404;
 							console.log('End of the search.');
 							continue;
@@ -189,37 +194,40 @@ function getNextVerified(receive,count,callback){
 							console.log(pages[pages.length-1]);
 						}
 					}
-					if(i==25)
+					console.log("VR: "+count+" length: "+pages.length);
+					document.getElementById("info").innerHTML=pages.length+' verified pages found...';
+					if(i==limit)
 					{
 						getNextVerified(response,count,callback);
 					} 
 					else if (callback && typeof callback=='function')callback();			
 				}
-				console.log("VR: "+count+" length: "+pages.length);
-							document.getElementById("info").innerHTML=pages.length+' verified pages found...';
+
 			});
 };
 
 function search()
 {
 	if(lastpagename==document.getElementById("pagename").value)return;
-	
+	pagenum=0;
 	lastpagename=document.getElementById("pagename").value;
 	pages.length=0;
+	pagenames.length=0;
 	document.getElementById("showlatest").innerHTML='';
 	document.getElementById("showkeywords").innerHTML='';
-	var path='/search?q='+document.getElementById("pagename").value+'&type=page';
+	var path='/search?q='+document.getElementById("pagename").value+'&type=page&limit='+limit;
 	var i=0;
 	var count=1;
-	FB.api( path , { fields: 'is_verified'}, function(response) {
+	FB.api( path , { fields: 'name,is_verified'}, function(response) {
 		console.log(JSON.stringify(response));
 		if (!response || response.error) {
-			document.getElementById("showlatest").innerHTML='Search failed.';
+			document.getElementById("info").innerHTML='Search failed.';
 			return;
 		} 
 		else {
-			for (i=0;i<25;i++){
+			for (i=0;i<limit;i++){
 				if(response.data[i]===undefined){
+					console.log("total: "+i);
 					i=404;
 					console.log('End of the search.');
 					continue;
@@ -227,64 +235,44 @@ function search()
 				if(response.data[i].is_verified==true)
 				{
 					pages.push(response.data[i].id);
+					pagenames.push(response.data[i].name);
 					console.log(pages[pages.length-1]);
+										console.log(pagenames[pagenames.length-1]);
 				}
 			}
-			if(i==25)
+			if(i==limit)
 			{
 				getNextVerified(response,count,show);
 			}
-			else show(); 
+			else {
+				show();
+			}; 
 		}
 		console.log("VR: "+count+" length: "+pages.length);
-
-	});
-}
-
-function FBsearch(callback)
-{
-	FB.api( path , { fields: 'is_verified'}, function(response) {
-		var i=0;
-		//console.log(JSON.stringify(response));
-		for (i=0;i<25;i++)
-		{
-			if(response.data[i]===undefined){
-				document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
-				return;
-			}
-			if(response.data[i].is_verified==true)
-			{
-				pages.push(response.data[i].id);
-				console.log(pages[i]);
-				GetPost(response.data[i].id);
-			}
-		}
-		document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
-		setTimeout(function(){GetNextVerified(response.paging.next,count,round)}, 1000);
 	});
 }
 
 function show()
 {
-	var i=0
+
 	if (pages.length==0){
 		document.getElementById("info").innerHTML='No verified pages found.';
 		return;
 	}
 	else
 	{
-		document.getElementById("info").innerHTML=pages.length+' verified pages found.';
+		pagenum=0;
+				console.log("PN: "+pagenames[pagenum]);
+		document.getElementById("currentpagename").innerHTML=pagenames[pagenum];	
+		document.getElementById("info").innerHTML='#'+(pagenum+1)+" of "+pages.length+' verified pages.';
 	}
-	for (i=0;i<pages.length;i++){
 
-
-		console.log("page "+i+" : "+pages[i]);
-
-		var count=0;
-		var PC=0
-		var PR=1;
-		var path=pages[count]+'/posts';
-		FB.api( path , function(response) {
+	console.log("page "+pagenum+" : "+pages[pagenum]);
+	var i=0
+	var PC=0
+	var PR=1;
+	var path=pages[pagenum]+'/posts?limit='+limit;
+	FB.api( path , function(response) {
 				//console.log(JSON.stringify(response));
 				if (!response || response.error) {
 					document.getElementById("showlatest").innerHTML+=' End of the page';
@@ -292,7 +280,8 @@ function show()
 					return;
 				} 
 				else {
-					for (i=0;i<25;i++){
+					lastresponse=response;
+					for (i=0;i<limit;i++){
 						if(response.data[i]===undefined){
 							i=404;
 							console.log('End of the page.');
@@ -301,13 +290,13 @@ function show()
 						if(response.data[i].message===undefined)continue;
 						PC++;
 						if(response.data[i].story===undefined){	
-							document.getElementById("showlatest").innerHTML+="<p><a href='http://www.facebook.com/"+response.data[i].id+"'>www.facebook.com/"+response.data[i].id+"</a><br>";
+							document.getElementById("showlatest").innerHTML+="<a href='https://www.facebook.com/"+response.data[i].id+"'>link</a><br>";
 						}
 						else{		
-							document.getElementById("showlatest").innerHTML+="<p><a href='http://www.facebook.com/"+response.data[i].id+"'>"+response.data[i].story+"</a><br>";
+							document.getElementById("showlatest").innerHTML+="<a class='lead' href='https://www.facebook.com/"+response.data[i].id+"'>"+response.data[i].story+"</a><br>";
 						}
-						document.getElementById("showlatest").innerHTML+='<span class="text-success" >'+response.data[i].created_time+"</span><br>";
-						document.getElementById("showlatest").innerHTML+=response.data[i].message+"<br></p>";
+						document.getElementById("showlatest").innerHTML+='<span class="text-success small" >'+response.data[i].created_time+"</span><br>";
+						document.getElementById("showlatest").innerHTML+="<h4>"+response.data[i].message+"</h4><br>";
 				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
 				        xhr.onreadystatechange = function() {
 				        	if (xhr.readyState == XMLHttpRequest.DONE) {
@@ -318,46 +307,175 @@ function show()
                         //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
                         xhr.send(JSON.stringify(response.data[i]));
                     }	
-        }
-        console.log("PR: "+PR+" PC: "+PC);
-    });
+                }
+                console.log("PR: "+PR+" PC: "+PC);
+            });
 }
 
-}
+function getPreviousPage()
+{
 
-function getPost(pageid){
+	if (pages.length==0 || pagenum-1<0){
+		console.log("PN: "+pagenum+" PL: "+pages.length);
+		document.getElementById("info").innerHTML='No previous verified page.';
+		return;
+	}
+	else
+	{
+		pagenum--;
+		console.log("PN: "+pagenames[pagenum]);
+		document.getElementById("currentpagename").innerHTML=pagenames[pagenum];
+		document.getElementById("showlatest").innerHTML='';
+		document.getElementById("info").innerHTML='#'+(pagenum+1)+" of "+pages.length+' verified pages.';
+	}
 
-	var postcount=0
-	var postround=1;
-	var path=pageid+'/posts';
+	console.log("page "+pagenum+" : "+pages[pagenum]);
+	var i=0
+	var path=pages[pagenum]+'/posts';
 	FB.api( path , function(response) {
-		var i=0;
-		//console.log(JSON.stringify(response));
-		for (i=0;i<25;i++)
-		{
-			if(response.data[i]===undefined){
-				document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
-				return ;
-			}
-			if(response.data[i].message===undefined)continue;
-			
-				//document.getElementById("logs").innerHTML+=(response.data[i].id+'<br>');
-				postcount++;
-				var xhr = new XMLHttpRequest();   // new HttpRequest instance 
-				xhr.onreadystatechange = function() {
-					if (xhr.readyState == XMLHttpRequest.DONE) {
-						console.log(xhr.responseText);
-					}
-				}
-				xhr.open("POST", "/elastic.html");
-                //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                xhr.send(JSON.stringify(response.data[i]));
-
-            }
-            document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
-            setTimeout(function(){GetNextPost(response.paging.next,postcount,postround)}, 1000);
-        });
-
+				//console.log(JSON.stringify(response));
+				if (!response || response.error) {
+					document.getElementById("showlatest").innerHTML+=' End of the page';
+					//if (callback && typeof callback=='function')callback();
+					return;
+				} 
+				else {
+					lastresponse=response;
+					for (i=0;i<limit;i++){
+						if(response.data[i]===undefined){
+							i=404;
+							console.log('End of the page.');
+							continue;
+						}
+						if(response.data[i].message===undefined)continue;
+						if(response.data[i].story===undefined){	
+							document.getElementById("showlatest").innerHTML+="<a href='https://www.facebook.com/"+response.data[i].id+"'>link</a><br>";
+						}
+						else{		
+							document.getElementById("showlatest").innerHTML+="<a class='lead' href='https://www.facebook.com/"+response.data[i].id+"'>"+response.data[i].story+"</a><br>";
+						}
+						document.getElementById("showlatest").innerHTML+='<span class="text-success small" >'+response.data[i].created_time+"</span><br>";
+						document.getElementById("showlatest").innerHTML+="<h4>"+response.data[i].message+"</h4><br>";
+				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
+				        xhr.onreadystatechange = function() {
+				        	if (xhr.readyState == XMLHttpRequest.DONE) {
+				        		console.log(xhr.responseText);
+				        	}
+				        }
+				        xhr.open("POST", "/elastic.html");
+                        //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        xhr.send(JSON.stringify(response.data[i]));
+                    }	
+                }
+            });
 }
 
+
+function getNextPage()
+{
+
+	if (pages.length==0 || pagenum+1>=pages.length){
+		console.log("PN: "+pagenum+" PL: "+pages.length);
+		document.getElementById("info").innerHTML='No next verified page.';
+		return;
+	}
+	else
+	{
+		pagenum++;
+		console.log("PN: "+pagenames[pagenum]);
+		document.getElementById("currentpagename").innerHTML=pagenames[pagenum];
+		document.getElementById("showlatest").innerHTML='';
+		document.getElementById("info").innerHTML='#'+(pagenum+1)+" of "+pages.length+' verified pages.';
+	}
+
+	console.log("page "+pagenum+" : "+pages[pagenum]);
+	var i=0
+	var path=pages[pagenum]+'/posts';
+	FB.api( path , function(response) {
+				//console.log(JSON.stringify(response));
+				if (!response || response.error) {
+					document.getElementById("showlatest").innerHTML+=' End of the page';
+					//if (callback && typeof callback=='function')callback();
+					return;
+				} 
+				else {
+					lastresponse=response;
+					for (i=0;i<limit;i++){
+						if(response.data[i]===undefined){
+							i=404;
+							console.log('End of the page.');
+							continue;
+						}
+						if(response.data[i].message===undefined)continue;
+						if(response.data[i].story===undefined){	
+							document.getElementById("showlatest").innerHTML+="<a href='https://www.facebook.com/"+response.data[i].id+"'>link</a><br>";
+						}
+						else{		
+							document.getElementById("showlatest").innerHTML+="<a class='lead' href='https://www.facebook.com/"+response.data[i].id+"'>"+response.data[i].story+"</a><br>";
+						}
+						document.getElementById("showlatest").innerHTML+='<span class="text-success small" >'+response.data[i].created_time+"</span><br>";
+						document.getElementById("showlatest").innerHTML+="<h4>"+response.data[i].message+"</h4><br>";
+				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
+				        xhr.onreadystatechange = function() {
+				        	if (xhr.readyState == XMLHttpRequest.DONE) {
+				        		console.log(xhr.responseText);
+				        	}
+				        }
+				        xhr.open("POST", "/elastic.html");
+                        //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        xhr.send(JSON.stringify(response.data[i]));
+                    }	
+                }
+            });
+}
+
+function showmore()
+{
+	if (pages.length==0){
+		document.getElementById("info").innerHTML='No verified pages found.';
+		return;
+	}
+	else
+	{
+		document.getElementById("info").innerHTML=pages.length+' verified pages found.';
+	}
+	var i=0;
+	var path=lastresponse.paging.next;
+	FB.api( path , function(response) {
+				//console.log(JSON.stringify(response));
+				if (!response || response.error) {
+					document.getElementById("showlatest").innerHTML+=' End of the page';
+					//if (callback && typeof callback=='function')callback();
+					return;
+				} 
+				else {
+					lastresponse=response;
+					for (i=0;i<limit;i++){
+						if(response.data[i]===undefined){
+							i=404;
+							console.log('End of the page.');
+							continue;
+						}
+						if(response.data[i].message===undefined)continue;
+						if(response.data[i].story===undefined){	
+							document.getElementById("showlatest").innerHTML+="<a href='https://www.facebook.com/"+response.data[i].id+"'>link</a><br>";
+						}
+						else{		
+							document.getElementById("showlatest").innerHTML+="<a class='lead' href='https://www.facebook.com/"+response.data[i].id+"'>"+response.data[i].story+"</a><br>";
+						}
+						document.getElementById("showlatest").innerHTML+='<span class="text-success small" >'+response.data[i].created_time+"</span><br>";
+						document.getElementById("showlatest").innerHTML+="<h4>"+response.data[i].message+"</h4><br>";
+				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
+				        xhr.onreadystatechange = function() {
+				        	if (xhr.readyState == XMLHttpRequest.DONE) {
+				        		console.log(xhr.responseText);
+				        	}
+				        }
+				        xhr.open("POST", "/elastic.html");
+                        //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        xhr.send(JSON.stringify(response.data[i]));
+                    }	
+                }
+            });
+}
 
