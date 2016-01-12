@@ -5,6 +5,10 @@ var pagenum=0;
 var pagenames=[];
 var lastresponse={};
 var limit=100;
+var t1 = new Date();
+var t2 = new Date();
+var ct1 = new Date();
+var ct2 = new Date();
 
 function clearPageName(){
 	document.getElementById("pagename").value="";
@@ -93,6 +97,8 @@ function GetNextVerified(path,count,round){
 	});
 };
 */
+
+
 function GetPost(pageid){
 
 	var postcount=0
@@ -167,23 +173,74 @@ function Logout()
 	FB.logout(function(){document.location.reload();});
 }
 
+function crawlPage(CPS,CPI,LR,callback){
+	if(LR===undefined && CPI<CPS.length){
+		var path=CPS[CPI]+'/posts?limit='+limit;
+	}
+	else if(LR.paging && LR.paging.next){
+		var path=LR.paging.next;
+	}
+	else if(CPI+1<CPS.length){ 
+		callback && callback(CPS,CPI+1,undefined,callback);
+		return;
+	}
+	else {
+		ct2 = new Date();
+		console.log("Crawl ends!");
+		console.log("Crawl elasped time:"+(ct2.getTime()-ct1.getTime())/1000+" s");
+		return;
+	}
 
+	FB.api( path , function(response) {
+		//console.log(JSON.stringify(response));
+		if (!response || response.error || response==[]) {
+			callback && callback(CPS,CPI+1,undefined,callback);
+			console.log("crawl CPS[CPI]: "+CPS[CPI]+"CPI: "+CPI);
+		} 
+		else {
+			var length=response.data.length;
+			if(length>0){
+				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
+				        xhr.onreadystatechange = function() {
+				        	if (xhr.readyState == XMLHttpRequest.DONE) {
+				        		console.log(xhr.responseText);
+				        	}
+				        }
+				        xhr.open("POST", "/elastic.html");
+                        //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        xhr.send(JSON.stringify(response));
+                    }
+                }
+                callback && callback(CPS,CPI,response,callback);
+            });
+}
+
+function crawl()
+{
+	console.log("crawl begins!");
+	ct1 = new Date();
+	var crawlpages=pages;
+	var i=0;
+	var path=crawlpages[i]+'/posts?limit='+limit;
+	if (crawlpages.length==0)return;
+	crawlPage(crawlpages,i,undefined,crawlPage);
+}
 
 function getNextVerified(receive,count,callback){
 	count++;
 	var i=0;
-	var path=receive.paging.next
+	var path=receive.paging.next;
 	FB.api( path , { fields: 'is_verified'}, function(response) {
 				//console.log(JSON.stringify(response));
 				if (!response || response.error) {
 					console.log('End of the search.');
-					if (callback && typeof callback=='function')callback();
-					return;
+					show();
+					callback && callback();
 				} 
 				else {
 					for (i=0;i<limit;i++){
 						if(response.data[i]===undefined){
-												console.log("total: "+i);
+							console.log("total: "+i);
 							i=404;
 							console.log('End of the search.');
 							continue;
@@ -200,7 +257,11 @@ function getNextVerified(receive,count,callback){
 					{
 						getNextVerified(response,count,callback);
 					} 
-					else if (callback && typeof callback=='function')callback();			
+					else
+					{
+						show();
+						callback && callback();
+					}				
 				}
 
 			});
@@ -209,10 +270,12 @@ function getNextVerified(receive,count,callback){
 function search()
 {
 	if(lastpagename==document.getElementById("pagename").value)return;
+	t1 = new Date();
 	pagenum=0;
 	lastpagename=document.getElementById("pagename").value;
 	pages.length=0;
 	pagenames.length=0;
+	document.getElementById("currentpagename").innerHTML='';
 	document.getElementById("showlatest").innerHTML='';
 	document.getElementById("showkeywords").innerHTML='';
 	var path='/search?q='+document.getElementById("pagename").value+'&type=page&limit='+limit;
@@ -237,18 +300,20 @@ function search()
 					pages.push(response.data[i].id);
 					pagenames.push(response.data[i].name);
 					console.log(pages[pages.length-1]);
-										console.log(pagenames[pagenames.length-1]);
+					console.log(pagenames[pagenames.length-1]);
 				}
 			}
 			if(i==limit)
 			{
-				getNextVerified(response,count,show);
+				getNextVerified(response,count,crawl);
 			}
 			else {
 				show();
+				crawl();
 			}; 
 		}
 		console.log("VR: "+count+" length: "+pages.length);
+
 	});
 }
 
@@ -262,7 +327,7 @@ function show()
 	else
 	{
 		pagenum=0;
-				console.log("PN: "+pagenames[pagenum]);
+		console.log("PN: "+pagenames[pagenum]);
 		document.getElementById("currentpagename").innerHTML=pagenames[pagenum];	
 		document.getElementById("info").innerHTML='#'+(pagenum+1)+" of "+pages.length+' verified pages.';
 	}
@@ -297,6 +362,8 @@ function show()
 						}
 						document.getElementById("showlatest").innerHTML+='<span class="text-success small" >'+response.data[i].created_time+"</span><br>";
 						document.getElementById("showlatest").innerHTML+="<h4>"+response.data[i].message+"</h4><br>";
+					}
+					/*
 				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
 				        xhr.onreadystatechange = function() {
 				        	if (xhr.readyState == XMLHttpRequest.DONE) {
@@ -305,11 +372,15 @@ function show()
 				        }
 				        xhr.open("POST", "/elastic.html");
                         //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                        xhr.send(JSON.stringify(response.data[i]));
-                    }	
-                }
-                console.log("PR: "+PR+" PC: "+PC);
-            });
+                        xhr.send(JSON.stringify(response));
+                        */
+                    }
+                    t2 = new Date();
+                    console.log("Crawl elasped time: "+(t2.getTime()-t1.getTime())/1000);
+                    document.getElementById("elaspedtime").innerHTML="elasped time: "+(t2.getTime()-t1.getTime())/1000+"s";
+                    console.log("PR: "+PR+" PC: "+PC);
+
+                });
 }
 
 function getPreviousPage()
@@ -356,6 +427,8 @@ function getPreviousPage()
 						}
 						document.getElementById("showlatest").innerHTML+='<span class="text-success small" >'+response.data[i].created_time+"</span><br>";
 						document.getElementById("showlatest").innerHTML+="<h4>"+response.data[i].message+"</h4><br>";
+					}
+					/*
 				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
 				        xhr.onreadystatechange = function() {
 				        	if (xhr.readyState == XMLHttpRequest.DONE) {
@@ -364,10 +437,10 @@ function getPreviousPage()
 				        }
 				        xhr.open("POST", "/elastic.html");
                         //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                        xhr.send(JSON.stringify(response.data[i]));
-                    }	
-                }
-            });
+                        xhr.send(JSON.stringify(response));
+                        */
+                    }
+                });
 }
 
 
@@ -415,6 +488,8 @@ function getNextPage()
 						}
 						document.getElementById("showlatest").innerHTML+='<span class="text-success small" >'+response.data[i].created_time+"</span><br>";
 						document.getElementById("showlatest").innerHTML+="<h4>"+response.data[i].message+"</h4><br>";
+					}
+					/*
 				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
 				        xhr.onreadystatechange = function() {
 				        	if (xhr.readyState == XMLHttpRequest.DONE) {
@@ -423,10 +498,10 @@ function getNextPage()
 				        }
 				        xhr.open("POST", "/elastic.html");
                         //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                        xhr.send(JSON.stringify(response.data[i]));
-                    }	
-                }
-            });
+                        xhr.send(JSON.stringify(response));	
+                        */
+                    }
+                });
 }
 
 function showmore()
@@ -465,6 +540,8 @@ function showmore()
 						}
 						document.getElementById("showlatest").innerHTML+='<span class="text-success small" >'+response.data[i].created_time+"</span><br>";
 						document.getElementById("showlatest").innerHTML+="<h4>"+response.data[i].message+"</h4><br>";
+					}
+					/*
 				        var xhr = new XMLHttpRequest();   // new HttpRequest instance 
 				        xhr.onreadystatechange = function() {
 				        	if (xhr.readyState == XMLHttpRequest.DONE) {
@@ -473,9 +550,9 @@ function showmore()
 				        }
 				        xhr.open("POST", "/elastic.html");
                         //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                        xhr.send(JSON.stringify(response.data[i]));
-                    }	
-                }
-            });
+                        xhr.send(JSON.stringify(response));	
+                        */
+                    }
+                });
 }
 
