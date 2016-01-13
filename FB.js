@@ -1,5 +1,6 @@
 var clicks=0;
 var lastpagename='';
+var lastkeyword='';
 var pages=[];
 var pagenum=0;
 var pagenames=[];
@@ -71,102 +72,6 @@ function getPhoto()
 }(document, 'script', 'facebook-jssdk'));
 
 
-
-
-/*
-function GetNextVerified(path,count,round){
-	round++;
-	FB.api( path,  function(response) {
-		var i=0;
-		//console.log("content:"+JSON.stringify(response));
-		for (i=0;i<limit;i++)
-		{
-			if(response.data[i]===undefined){
-				document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
-				return;
-			}
-			if(response.data[i].is_verified==true)
-			{
-				document.getElementById("logs").innerHTML+=(response.data[i].id+'<br>');
-				count++;
-				GetPost(response.data[i].id);
-			}
-		}
-		document.getElementById("logs").innerHTML+='Round: '+round+' Verified Count:'+count+' ------------<br>';
-		setTimeout(function(){GetNextVerified(response.paging.next,count,round)}, 1000);
-	});
-};
-*/
-
-
-function GetPost(pageid){
-
-	var postcount=0
-	var postround=1;
-	var path=pageid+'/posts';
-	FB.api( path , function(response) {
-		var i=0;
-		//console.log(JSON.stringify(response));
-		for (i=0;i<limit;i++)
-		{
-			if(response.data[i]===undefined){
-				document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
-				return ;
-			}
-			if(response.data[i].message===undefined)continue;
-			
-				//document.getElementById("logs").innerHTML+=(response.data[i].id+'<br>');
-				postcount++;
-				var xhr = new XMLHttpRequest();   // new HttpRequest instance 
-				xhr.onreadystatechange = function() {
-					if (xhr.readyState == XMLHttpRequest.DONE) {
-						console.log(xhr.responseText);
-					}
-				}
-				xhr.open("POST", "/elastic.html");
-                //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                xhr.send(JSON.stringify(response.data[i]));
-
-            }
-            document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
-            setTimeout(function(){GetNextPost(response.paging.next,postcount,postround)}, 1000);
-        });
-
-}
-
-function GetNextPost(path,postcount,postround){
-
-	postround++;
-	FB.api( path , function(response) {
-		var i=0;
-		//console.log(JSON.stringify(response));
-
-		for (i=0;i<limit;i++)
-		{
-			if(response.data[i]===undefined){
-				document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
-				return;
-			}
-			if(response.data[i].message===undefined)continue;
-			
-				//document.getElementById("logs").innerHTML+=(response.data[i].id+'<br>');
-				postcount++;
-				var xhr = new XMLHttpRequest();   // new HttpRequest instance 
-				xhr.onreadystatechange = function() {
-					if (xhr.readyState == XMLHttpRequest.DONE) {
-						console.log(xhr.responseText);
-					}
-				}
-				xhr.open("POST", "/elastic.html");
-                //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                xhr.send(JSON.stringify(response.data[i]));
-
-            }
-            document.getElementById("logs").innerHTML+='Posts Round: '+postround+' Posts Count:'+postcount+' ------------<br>';
-            setTimeout(function(){GetNextPost(response.paging.next,postcount,postround)}, 1000);
-        });
-
-}
 
 function Logout()
 {
@@ -277,7 +182,7 @@ function search()
 	pagenames.length=0;
 	document.getElementById("currentpagename").innerHTML='';
 	document.getElementById("showlatest").innerHTML='';
-	document.getElementById("showkeywords").innerHTML='';
+	document.getElementById("showkeyword").innerHTML='';
 	var path='/search?q='+document.getElementById("pagename").value+'&type=page&limit='+limit;
 	var i=0;
 	var count=1;
@@ -305,11 +210,11 @@ function search()
 			}
 			if(i==limit)
 			{
-				getNextVerified(response,count,crawl);
+				getNextVerified(response,count,undefined);
 			}
 			else {
 				show();
-				crawl();
+				//crawl();
 			}; 
 		}
 		console.log("VR: "+count+" length: "+pages.length);
@@ -556,3 +461,40 @@ function showmore()
                 });
 }
 
+function keywordSearch(){
+    console.log("keyword start");
+	if(lastkeyword==document.getElementById("keyword").value)return;
+	t1 = new Date();
+	lastkeyword=document.getElementById("keyword").value;
+	document.getElementById("currentkeyword").innerHTML='';
+	document.getElementById("showkeyword").innerHTML='';
+	var two={pageid:pages[pagenum],keyword:lastkeyword};
+	console.log("two pageid: "+two.pageid+" keyword: "+two.keyword);
+	if (document.getElementById("pagename").value=="")two.pageid="";
+    var xhr = new XMLHttpRequest();   // new HttpRequest instance 
+    xhr.onreadystatechange = function() {
+   if(xhr.readyState == 4 && xhr.status == 200) {
+          	console.log("RES: "+xhr.responseText);
+       		console.log("RES2: "+JSON.parse(xhr.responseText));
+            var h=JSON.parse(xhr.responseText);
+       		document.getElementById("currentkeyword").innerHTML=lastkeyword;
+       		document.getElementById("info2").innerHTML="Totoal results: "+h.hits.total;
+       		var i=0;
+       		for(i=0;i<10;i++){
+       		    if(h.hits.hits[i]._source.story===undefined){	
+				document.getElementById("showkeyword").innerHTML+="<a href='https://www.facebook.com/"+h.hits.hits[i]._source.id+"'>link</a><br>";
+				}
+				else{		
+				document.getElementById("showkeyword").innerHTML+="<a class='lead' href='https://www.facebook.com/"+h.hits.hits[i]._source.id+"'>"+h.hits.hits[i]._source.story+"</a><br>";
+					}
+				document.getElementById("showkeyword").innerHTML+='<span class="text-success small" >'+h.hits.hits[i]._source.created_time+"</span><br>";
+				document.getElementById("showkeyword").innerHTML+="<h4>"+h.hits.hits[i]._source.message+"</h4><br>";
+       		}
+
+        	}
+    }
+    xhr.open("POST", "/keyword.html");
+                 //xmlhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+  xhr.send(JSON.stringify(two));
+
+}

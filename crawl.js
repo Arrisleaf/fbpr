@@ -19,10 +19,49 @@ http.createServer( function (request, response) {
          // Content Type: text/plain
          response.writeHead(404, {'Content-Type': 'text/html'});
        }
-       else if(pathname.substr(1)=='elastic.html')
-       {
-
+       else if(pathname.substr(1)=='keyword.html'){
         console.log("Request for " + pathname + " received.");
+
+    //request.setEncoding('utf-8');
+    var postData = ""; //POST & GET ： name=zzl&email=zzl@sina.com
+    // 数据块接收中
+    request.addListener("data", function (postDataChunk) {
+      postData += postDataChunk;
+    });
+
+    request.addListener("end", function () {
+      var two=JSON.parse(postData);
+      client.search({
+        index: _index,
+        type: two.pageid,
+        q: "message:"+two.keyword,
+      }, function (error, res) {
+  // ...
+       if(error){
+           response.writeHead(500, {
+           "Content-Type": "text/plain;charset=utf-8"});
+//  response.end("fail.");
+       }
+       else{
+       console.log("res:"+res);
+       console.log("string res"+JSON.stringify(res));
+       var p=JSON.stringify(res);
+  /*
+  response.writeHead(200, {
+    "Content-Type": "text/plain;charset=utf-8"
+  });
+*/
+       response.write(p);
+       response.end();
+       }  
+       });
+
+  });
+  }
+  else if(pathname.substr(1)=='elastic.html')
+  {
+
+    console.log("Request for " + pathname + " received.");
 
     //request.setEncoding('utf-8');
     var postData = ""; //POST & GET ： name=zzl&email=zzl@sina.com
@@ -50,21 +89,21 @@ http.createServer( function (request, response) {
         console.log("created_time: "+p.data[i].created_time);
         console.log("type: "+p.data[i].id.substring(0,p.data[i].id.indexOf("_")));
         */  
-         client.index({
-               index: _index,
-               type: p.data[i].id.substring(0,p.data[i].id.indexOf("_")),
-               id: p.data[i].id,
-               body: {
-                  message: p.data[i].message,
-                  created_time: p.data[i].created_time,
-                  id: p.data[i].id
-               }
-            }, function (error, response) {
-            });
+        client.index({
+         index: _index,
+         type: p.data[i].id.substring(0,p.data[i].id.indexOf("_")),
+         id: p.data[i].id,
+         body: {
+          message: p.data[i].message,
+          created_time: p.data[i].created_time,
+          id: p.data[i].id
+        }
+      }, function (error, response) {
+      });
 
       }
     }
- 
+
     response.writeHead(200, {
       "Content-Type": "text/plain;charset=utf-8"
     });
@@ -72,23 +111,23 @@ http.createServer( function (request, response) {
 
   });
 }
-else if (pathname.substr(1)=="css/bootstrap.min.css")
-{
+   else if (pathname.substr(1)=="css/bootstrap.min.css"){
  response.writeHead(200, {"Content-Type": "text/css"});
          // Write the content of the file to response body
-         response.write(data.toString()); 
+         response.write(data.toString());
+         response.end(); 
        }
-       else{	
+  else{	
          //Page found	  
          // HTTP Status: 200 : OK
          // Content Type: text/plain
          response.writeHead(200, {'Content-Type': 'text/html'});	
          
          // Write the content of the file to response body
-         response.write(data.toString());		
+         response.write(data.toString());	
+         response.end();	
        }
       // Send the response body 
-      response.end();
     });   
 }).listen(9836);
 

@@ -36,7 +36,7 @@
 	<div class="input-group">
 		<input id="keyword" type="text" class="form-control" placeholder="Search on the pages">
 		<span class="input-group-btn">
-			<button id="getKeyword" class="btn btn-primary" type="button" onclick="search()">Search the page!</button>
+			<button id="getKeyword" class="btn btn-primary" type="button" onclick="keywordSearch()">keyword on the page</button>
 			<button id="clearKeyword" class="btn btn-default" type="button" onclick="clearKeyword()">Clear</button>
 		</span>
 	</div><!-- /input-group -->
@@ -44,7 +44,8 @@
 </div>
 <div id="logs"></div>
 <div id="status"></div>
-			<div class="col-lg-10">
+<h2><strong id="currentpagename" class="col-lg-10"></strong></h2>
+	<div class="col-lg-10">
 
 	<div class="container">
 		<ul class="nav nav-tabs">
@@ -67,13 +68,20 @@
 						<button id="getNextPage" type="button" class="btn btn-default" onclick="getNextPage()">Next Page</button>
 					</div>
 				</div>
-				<h3><strong id="currentpagename" class="col-lg-8"></strong></h3>
+<!--			<h3><strong id="currentpagename" class="col-lg-8"></strong></h3> -->
 				<div id="showlatest" class="col-lg-8"></div>
 				<div><button id="more" type="button" class="btn btn-primary col-lg-8" onclick="showmore()">more</button></div>
 			</div>
 			<div id="keywords" class="tab-pane fade">
-				<div id="showkeywords"></div>
-				<button id="more" type="button" class="btn btn-primary" onclick="">more</button>
+								<div class="col-lg-8">
+					<div id="info2" class="alert alert-info" role="alert"></div>
+				</div>
+				<div class="col-lg-4">
+				<div id="elaspedtime2" class="alert alert-warning" role="alert"></div>
+				</div>
+				<div><h3><strong id="currentkeyword" class="col-lg-8"></strong></h3></div>
+				<div id="showkeyword" class="col-lg-8"></div>
+				<div><button id="more2" type="button" class="btn btn-primary col-lg-8" onclick="showmore()">more</button></div>
 			</div>
 		</div>
 	</div>
