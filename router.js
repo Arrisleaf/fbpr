@@ -35,6 +35,12 @@ http.createServer( function (request, response) {
         index: _index,
         type: two.pageid,
         q: "message:"+two.keyword,
+        range : {
+            "created_time" : {
+                "gte" : "now-3M/d",
+                "lt" :  "now/d"
+               }
+           }
       }, function (error, res) {
   // ...
        if(error){
