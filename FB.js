@@ -174,7 +174,7 @@ function getNextVerified(receive,count,callback){
 
 function search()
 {
-	if(lastpagename==document.getElementById("pagename").value)return;
+	//if(lastpagename==document.getElementById("pagename").value)return;
 	t1 = new Date();
 	pagenum=0;
 	lastpagename=document.getElementById("pagename").value;
@@ -463,7 +463,7 @@ function showmore()
 
 function keywordSearch(){
     console.log("keyword start");
-	if(lastkeyword==document.getElementById("keyword").value)return;
+	//if(lastkeyword==document.getElementById("keyword").value)return;
 	t1 = new Date();
 	lastkeyword=document.getElementById("keyword").value;
 	document.getElementById("currentkeyword").innerHTML='';
